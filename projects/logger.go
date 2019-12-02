@@ -9,8 +9,8 @@ var Logger *zap.SugaredLogger
 func ProductionLogger() {
 
 	cf := zap.NewProductionConfig()
-	cf.OutputPaths = []string{"/var/log/qbbudgets/logs"}
-	cf.ErrorOutputPaths = []string{"/var/log/qbbudgets/logs"}
+	cf.OutputPaths = []string{"/var/log/qbprojects/logs"}
+	cf.ErrorOutputPaths = []string{"/var/log/qbprojects/logs"}
 	cf.Level = zap.NewAtomicLevelAt(zap.DebugLevel)
 	cf.Encoding = "json"
 	logg, err := cf.Build()

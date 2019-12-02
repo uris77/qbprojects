@@ -7,18 +7,19 @@ import (
 )
 
 type qbaseConf struct {
-	QbUsername    string
-	QbPassword    string
-	QbAppToken    string
-	TeamworkToken string
-	DbUser        string
-	DbPassword    string
-	DbName        string
-	DbHost        string
+	QbUsername          string
+	QbPassword          string
+	QbAppToken          string
+	TeamworkToken       string
+	DbUser              string
+	DbPassword          string
+	DbName              string
+	DbHost              string
+	ProjectCentralTable string
 }
 
 func ReadConf(stage string) qbaseConf {
-	viper.SetConfigFile("/home/ec2-user/.private/qbase.yaml")
+	viper.SetConfigFile("/home/ec2-user/.private/qbprojects.yaml")
 
 	Logger.Debugw("Config file Used", "file", viper.ConfigFileUsed())
 

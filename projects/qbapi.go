@@ -27,8 +27,8 @@ type Project struct {
 	ProjectName           string `xml:"project_name"`
 	Product               string `xml:"product"`
 	RelatedClient         int64  `xml:"related_client"`
-	StartDate             string `xml:"start_date"`
-	End                   string `xml:"end_date"`
+	SDate                 string `xml:"start_date"`
+	EDate                 string `xml:"end_date"`
 	ContractStatus        string `xml:"contract_status"`
 	ClientBillable        bool   `xml:"client_billable_"`
 	AssociatedContractIds string `xml:"associated_contract_ids"`
@@ -41,10 +41,17 @@ type Project struct {
 }
 
 func (b *Project) EndDate() pq.NullTime {
-	if len(b.End) == 0 {
+	if len(b.EDate) == 0 {
 		return pq.NullTime{Valid: false}
 	}
-	return pq.NullTime{Time: EpochToDate(b.End), Valid: true}
+	return pq.NullTime{Time: EpochToDate(b.EDate), Valid: true}
+}
+
+func (b *Project) StartDate() pq.NullTime {
+	if len(b.SDate) == 0 {
+		return pq.NullTime{Valid: false}
+	}
+	return pq.NullTime{Time: EpochToDate(b.SDate), Valid: true}
 }
 
 func UnmarshallProject(raw string) ProjectDoc {
@@ -150,4 +157,30 @@ func EpochToDate(e string) time.Time {
 	sec, _ := strconv.ParseInt(dsec, 10, 64)
 	nsec, _ := strconv.ParseInt(dnsec, 10, 64)
 	return time.Unix(sec, nsec)
+}
+
+func ProjectsQuery(ticket string, appToken string, size int, offset int) string {
+	return fmt.Sprintf("<qdbapi><ticket>%s</ticket><apptoken>%s</apptoken><query>{1.IR.'last 5 y '}OR{2.IR. 'this y'}</query><includeRids>1</includeRids><clist>a</clist><slist>3</slist><options>num-%d.skp-%d.sortorder-A</options></qdbapi>", ticket, appToken, size, offset)
+}
+
+func GetProjects(ticket string, table string, appToken string, size int, offset int) ProjectDoc {
+	client := &http.Client{}
+	q := ProjectsQuery(ticket, appToken, size, offset)
+	baseUrl := fmt.Sprintf("https://befoundonline.quickbase.com/db/%s", table)
+	req, err := http.NewRequest("POST", baseUrl, bytes.NewBuffer([]byte(q)))
+	if err != nil {
+		Logger.Fatalw("Failed to create request for retrieving budgets", "error", err)
+	}
+	req.Header.Add("content-type", "application/xml")
+	req.Header.Add("accept", "application/xml")
+	req.Header.Add("QUICKBASE-ACTION", "API_DoQuery")
+
+	resp, err := client.Do(req)
+	if err != nil {
+		Logger.Fatalw("Posting Request for GetProjectsFailed Failed", "error", err)
+	}
+
+	bodyBytes, _ := ioutil.ReadAll(resp.Body)
+	bodyString := string(bodyBytes)
+	return UnmarshallProject(bodyString)
 }
